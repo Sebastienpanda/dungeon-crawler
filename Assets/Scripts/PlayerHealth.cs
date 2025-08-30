@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class PlayerHealth : MonoBehaviour
@@ -9,6 +10,9 @@ public class PlayerHealth : MonoBehaviour
 
 
     [SerializeField] GameObject[] hearts;
+
+    [SerializeField] private CanvasGroup fadePanel; // panel UI noir couvrant l'écran
+    [SerializeField] private float fadeDuration = 0.5f;
 
     private Animator animator;
 
@@ -53,9 +57,7 @@ public class PlayerHealth : MonoBehaviour
             animator.SetTrigger("Die");
         }
 
-        GetComponent<CharacterController>().enabled = false;
-
-        Invoke(nameof(Respawn), respawnDelay);
+        StartCoroutine(RespawnCoroutine(respawnPoint.position));
     }
 
     private void UpdateHud()
@@ -80,29 +82,41 @@ public class PlayerHealth : MonoBehaviour
         }
     }
 
-    private void Respawn()
+    private IEnumerator RespawnCoroutine(Vector3 respawnPos)
     {
+        // Désactiver le contrôleur pendant le fade
+        GetComponent<CharacterController>().enabled = false;
 
-        isDead = false;
+        // Fade Out
+        for (float t = 0; t < fadeDuration; t += Time.deltaTime)
+        {
+            fadePanel.alpha = t / fadeDuration;
+            yield return null;
+        }
+        fadePanel.alpha = 1;
 
-        // Remet la vie
+        // Déplacer joueur + reset vie
         currentHealth = maxHealth;
         UpdateHud();
+        transform.position = respawnPos;
 
-        // Replace au spawn
-        if (respawnPoint != null)
-        {
-            transform.position = respawnPoint.position;
-            transform.rotation = respawnPoint.rotation;
-        }
-
-        // Réactive le joueur
-        GetComponent<CharacterController>().enabled = true;
-
+        // Reset animation
         if (animator != null)
         {
-            animator.Rebind();   // remet tout à 0
-            animator.Update(0f); // force la mise à jour
+            animator.Rebind();
+            animator.Update(0f);
         }
+
+        // Fade In
+        for (float t = 0; t < fadeDuration; t += Time.deltaTime)
+        {
+            fadePanel.alpha = 1 - t / fadeDuration;
+            yield return null;
+        }
+        fadePanel.alpha = 0;
+
+        // Réactiver le contrôleur
+        GetComponent<CharacterController>().enabled = true;
+        isDead = false;
     }
 }

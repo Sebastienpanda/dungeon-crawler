@@ -10,9 +10,13 @@ public class PlayerCombat : MonoBehaviour
     [SerializeField] private AudioSource swordAudio; // Le composant AudioSource
     [SerializeField] private AudioClip slashSound;   // Le son de l'épée
 
+    [SerializeField] private float attackCooldown = 0.6f;
+
     private Collider[] hitResults = new Collider[10];
 
     private Animator animator;
+
+    private float nextAttackTime = 0f;
 
     private void Awake()
     {
@@ -21,10 +25,11 @@ public class PlayerCombat : MonoBehaviour
 
     public void OnAttack(InputAction.CallbackContext context)
     {
-        if (context.performed)
+        if (context.performed && Time.time >= nextAttackTime)
         {
+            nextAttackTime = Time.time + attackCooldown;
             animator.SetTrigger("Attack");
-            PlaySlashSound(); // jouer le son
+            PlaySlashSound();
             Attack();
         }
     }

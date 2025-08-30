@@ -38,7 +38,7 @@ public class Enemy : MonoBehaviour
 
         DropCoins(coinDropCount);
 
-        Destroy(gameObject, 2f);
+        Destroy(gameObject, 0.5f);
     }
 
     private void DropCoins(int count)

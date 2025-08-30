@@ -11,30 +11,21 @@ public class Door : MonoBehaviour
     private Quaternion closedRotation;
     private Quaternion openRotation;
     private Collider doorCollider;
-    private bool lastState;
 
     private void Start()
     {
         closedRotation = transform.rotation;
         openRotation = Quaternion.Euler(transform.eulerAngles + new Vector3(0, openAngle, 0));
         doorCollider = GetComponent<Collider>();
-        lastState = isOpen;
-        UpdateCollider();
+        UpdateCollider(); // met le collider à jour au départ
     }
 
     private void Update()
     {
+        // Interpolation continue vers la rotation cible
         Quaternion targetRotation = isOpen ? openRotation : closedRotation;
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * speed);
-
-
-        if (lastState != isOpen)
-        {
-            UpdateCollider();
-            lastState = isOpen;
-        }
     }
-
 
     private void UpdateCollider()
     {
@@ -45,5 +36,6 @@ public class Door : MonoBehaviour
     public void ToggleDoor()
     {
         isOpen = !isOpen;
+        UpdateCollider(); // Mettre à jour le collider à chaque toggle
     }
 }

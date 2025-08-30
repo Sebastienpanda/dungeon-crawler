@@ -18,6 +18,13 @@ public class PlayerMovement : MonoBehaviour
     private float verticalVelocity;
     private bool isGrounded;
 
+    private void Start()
+    {
+        // Lock et cache le curseur
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
+
     private void Awake()
     {
         controller = GetComponent<CharacterController>();

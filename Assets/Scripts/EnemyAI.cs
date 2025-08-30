@@ -3,6 +3,9 @@ using UnityEngine.AI;
 
 public class EnemyAI : MonoBehaviour
 {
+    [Header("General")]
+    [SerializeField] private bool isMage = false;
+
     [Header("Patrol")]
     public Transform[] patrolPoints;
     private int currentPoint;
@@ -25,6 +28,8 @@ public class EnemyAI : MonoBehaviour
     private bool isPlayerDetected = false;
     private float currentDistanceToPlayer = 0f;
     private float currentAngleToPlayer = 0f;
+
+    [SerializeField] private MageEnemy mageScript;
 
     private void Start()
     {
@@ -158,16 +163,24 @@ public class EnemyAI : MonoBehaviour
         }
     }
 
+    private void FireMageAttack()
+    {
+        mageScript.Fire();
+    }
+
     private void Attack()
     {
-        if (animator != null)
-        {
-            animator.SetTrigger("Attack");
+        if (animator != null) animator.SetTrigger("Attack");
 
-            if (player.TryGetComponent<PlayerHealth>(out var playerHealth))
-            {
-                playerHealth.TakeDamage(1);
-            }
+        if (player.TryGetComponent<PlayerHealth>(out var playerHealth))
+        {
+            playerHealth.TakeDamage(1);
+        }
+
+        if (isMage)
+        {
+            Invoke(nameof(FireMageAttack), 0.5f);
+
         }
     }
 
