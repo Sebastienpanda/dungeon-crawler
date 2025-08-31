@@ -1,28 +1,30 @@
-using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using System.Collections;
 
 public class PlayerHealth : MonoBehaviour
 {
-    public int maxHealth = 3; // nombre de vies/cœurs
+    public int maxHealth = 3;
     private int currentHealth;
-
     private bool isDead = false;
 
-
     [SerializeField] GameObject[] hearts;
-
-    [SerializeField] private CanvasGroup fadePanel; // panel UI noir couvrant l'écran
+    [SerializeField] private CanvasGroup fadePanel;
     [SerializeField] private float fadeDuration = 0.5f;
 
+    [SerializeField] private AudioClip deathSound;
+    private AudioSource audioSource;
     private Animator animator;
 
-    [Header("Respawn")]
-    public Transform respawnPoint; // tu mets un empty GameObject dans ta scène = spawn
-    public float respawnDelay = 2f;
+    private Transform respawnPoint;
 
     private void Awake()
     {
         animator = GetComponent<Animator>();
+        audioSource = GetComponent<AudioSource>();
+
+        // Assigner le respawn point selon la scène
+        AssignRespawnPoint();
     }
 
     private void Start()
@@ -31,13 +33,25 @@ public class PlayerHealth : MonoBehaviour
         UpdateHud();
     }
 
-    // Appelé par l'ennemi quand il touche le joueur
+    private void AssignRespawnPoint()
+    {
+        string spawnName = "SpawnPoint_" + SceneManager.GetActiveScene().name;
+        GameObject spawnObj = GameObject.Find(spawnName);
+        if (spawnObj != null)
+        {
+            respawnPoint = spawnObj.transform;
+        }
+        else
+        {
+            Debug.LogWarning("Spawn point introuvable pour cette scène : " + SceneManager.GetActiveScene().name);
+        }
+    }
+
     public void TakeDamage(int damage = 1)
     {
         if (isDead) return;
 
         currentHealth -= damage;
-        Debug.Log($"Joueur touché ! Vies restantes : {currentHealth}");
         UpdateHud();
 
         if (currentHealth <= 0)
@@ -50,41 +64,18 @@ public class PlayerHealth : MonoBehaviour
     {
         isDead = true;
 
-        Debug.Log("Joueur mort !");
+        if (audioSource != null && deathSound != null)
+            audioSource.PlayOneShot(deathSound);
 
         if (animator != null)
-        {
             animator.SetTrigger("Die");
-        }
 
-        StartCoroutine(RespawnCoroutine(respawnPoint.position));
+        // On ne stocke plus respawnPoint.position ici car il peut être détruit
+        StartCoroutine(RespawnCoroutine());
     }
 
-    private void UpdateHud()
+    private IEnumerator RespawnCoroutine()
     {
-        HideHearts();
-        ShowActiveHearts();
-    }
-
-    private void HideHearts()
-    {
-        foreach (GameObject heart in hearts)
-        {
-            heart.SetActive(false);
-        }
-    }
-
-    private void ShowActiveHearts()
-    {
-        for (int i = 0; i < currentHealth; i++)
-        {
-            hearts[i].SetActive(true);
-        }
-    }
-
-    private IEnumerator RespawnCoroutine(Vector3 respawnPos)
-    {
-        // Désactiver le contrôleur pendant le fade
         GetComponent<CharacterController>().enabled = false;
 
         // Fade Out
@@ -95,12 +86,21 @@ public class PlayerHealth : MonoBehaviour
         }
         fadePanel.alpha = 1;
 
-        // Déplacer joueur + reset vie
-        currentHealth = maxHealth;
-        UpdateHud();
-        transform.position = respawnPos;
+        // ⚡ Réassigner le spawn pour la scène courante
+        AssignRespawnPoint();
 
-        // Reset animation
+        if (respawnPoint != null)
+        {
+            // Reset vie + déplacer joueur
+            currentHealth = maxHealth;
+            UpdateHud();
+            transform.position = respawnPoint.position;
+        }
+        else
+        {
+            Debug.LogError("⚠ Aucun spawn trouvé dans la scène !");
+        }
+
         if (animator != null)
         {
             animator.Rebind();
@@ -115,8 +115,13 @@ public class PlayerHealth : MonoBehaviour
         }
         fadePanel.alpha = 0;
 
-        // Réactiver le contrôleur
         GetComponent<CharacterController>().enabled = true;
         isDead = false;
+    }
+
+    private void UpdateHud()
+    {
+        for (int i = 0; i < hearts.Length; i++)
+            hearts[i].SetActive(i < currentHealth);
     }
 }

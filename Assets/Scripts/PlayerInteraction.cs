@@ -3,30 +3,48 @@ using UnityEngine.InputSystem;
 
 public class PlayerInteraction : MonoBehaviour
 {
-    [SerializeField] private float interactDistance = 2f;
-    [SerializeField] private LayerMask doorLayer;
+    [Header("Raycast Settings")]
+    [SerializeField] private Transform raycastOrigin; // assigné dans l’inspecteur
+    [SerializeField] private float raycastDistance = 60f;
+    [SerializeField] private LayerMask interactableLayer;
 
+    [Header("Cooldown")]
+    [SerializeField] private float interactCooldown = 0.5f;
+    private float lastInteractTime = 0f;
+
+    // Méthode appelée par l'action "Interact" (touche E)
     public void OnInteract(InputAction.CallbackContext context)
     {
+        if (!context.performed || Time.time < lastInteractTime + interactCooldown) return;
+        lastInteractTime = Time.time;
 
-        if (!context.performed) return;
-
-        Debug.Log("ok");
-
-        // Utiliser la direction de la caméra pour viser
-        Vector3 origin = transform.position + Vector3.up * 1.5f;
-        Vector3 direction = Camera.main.transform.forward;
-
-        Debug.DrawRay(origin, direction * interactDistance, Color.red, 5f);
-
-        if (Physics.Raycast(origin, direction, out RaycastHit hit, interactDistance /*, doorLayer */))
+        if (raycastOrigin == null)
         {
-            Debug.Log("Touched: " + hit.collider.name);
-            if (hit.collider.TryGetComponent<Door>(out var door))
+            Debug.LogWarning("Raycast origin non assigné !");
+            return;
+        }
+
+        Vector3 origin = raycastOrigin.position;
+        Vector3 direction = raycastOrigin.forward;
+
+        Debug.DrawRay(origin, direction * raycastDistance, Color.red, 1f);
+
+        if (Physics.Raycast(origin, direction, out RaycastHit hit, raycastDistance, interactableLayer))
+        {
+            Door door = hit.collider.GetComponent<Door>();
+            if (door != null)
             {
                 door.ToggleDoor();
-                Debug.Log("Porte togglée !");
+                Debug.Log("Porte détectée et actionnée !");
             }
+            else
+            {
+                Debug.Log("Objet touché mais pas de script Door.");
+            }
+        }
+        else
+        {
+            Debug.Log("Aucun objet interactif détecté.");
         }
     }
 }

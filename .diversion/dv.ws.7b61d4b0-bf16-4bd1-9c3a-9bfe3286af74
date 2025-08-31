@@ -1,0 +1,14 @@
+{
+  "WorkspaceID": "dv.ws.7b61d4b0-bf16-4bd1-9c3a-9bfe3286af74",
+  "RepoID": "dv.repo.e6d16ca3-d216-4f2c-a4d9-fdd7f29d0840",
+  "Path": "C:\\Users\\sebas\\unity\\Circuit",
+  "AccountID": "Google_104496298434614886195",
+  "BranchID": "dv.branch.1",
+  "BranchName": "main",
+  "CommitID": "dv.commit.1",
+  "Paused": false,
+  "ShouldDownload": true,
+  "RepoName": "Circuit",
+  "ReadOnly": false,
+  "DigestMethod": "sha1"
+}

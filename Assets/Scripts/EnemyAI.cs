@@ -6,6 +6,10 @@ public class EnemyAI : MonoBehaviour
     [Header("General")]
     [SerializeField] private bool isMage = false;
 
+    [Header("Audio")]
+    [SerializeField] private AudioClip mageAttackSound;
+    private AudioSource audioSource;
+
     [Header("Patrol")]
     public Transform[] patrolPoints;
     private int currentPoint;
@@ -35,6 +39,7 @@ public class EnemyAI : MonoBehaviour
     {
         if (agent == null) agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
+        audioSource = GetComponent<AudioSource>();
 
         // Auto-assigner le player s'il n'est pas défini
         if (player == null)
@@ -51,10 +56,7 @@ public class EnemyAI : MonoBehaviour
 
     private void Update()
     {
-        if (agent == null)
-        {
-            return;
-        }
+        if (agent == null) return;
 
         // Réinitialiser la détection
         isPlayerDetected = false;
@@ -68,7 +70,7 @@ public class EnemyAI : MonoBehaviour
             Vector3 forward = transform.forward;
             currentAngleToPlayer = Vector3.Angle(forward, directionToPlayer.normalized);
 
-            // Conditions de détection plus claires
+            // Conditions de détection
             bool inRange = currentDistanceToPlayer <= detectionRange;
             bool inFieldOfView = currentAngleToPlayer <= (fieldOfView / 2f);
 
@@ -77,6 +79,7 @@ public class EnemyAI : MonoBehaviour
                 isPlayerDetected = true;
             }
 
+            // Vérifie qu'il n'y a pas d'obstacle
             if (isPlayerDetected)
             {
                 RaycastHit hit;
@@ -130,7 +133,7 @@ public class EnemyAI : MonoBehaviour
 
             // Regarder vers le joueur
             Vector3 lookDirection = (player.position - transform.position).normalized;
-            lookDirection.y = 0; // Garder sur le plan horizontal
+            lookDirection.y = 0;
             if (lookDirection != Vector3.zero)
             {
                 transform.rotation = Quaternion.LookRotation(lookDirection);
@@ -179,8 +182,14 @@ public class EnemyAI : MonoBehaviour
 
         if (isMage)
         {
+            // Tir du mage
             Invoke(nameof(FireMageAttack), 0.5f);
 
+            // Jouer un son de sort
+            if (audioSource != null && mageAttackSound != null)
+            {
+                audioSource.PlayOneShot(mageAttackSound);
+            }
         }
     }
 
